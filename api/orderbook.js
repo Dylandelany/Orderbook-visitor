@@ -3,7 +3,7 @@
 // GANTI DENGAN USERNAME/KEY UNIK KAMU
 const NAMESPACE = 'Dylandelany';
 const KEY = 'orderbook-visits';
-const MAX_ROWS = 5; // Batas maksimal baris SVG agar gambar tidak terlalu panjang
+const MAX_ROWS = 5; // Batas maksimal baris SVG
 const TIMEOUT_MS = 2500;
 
 function rand(min, max) {
@@ -62,12 +62,13 @@ function escapeXml(str) {
 function buildSvg(rows, totalVisits) {
   const width = 900;
   const rowHeight = 32;
-  const headerHeight = 48;
+  const headerHeight = 58; // Ditingkatkan dari 48 ke 58 agar ada jarak lega ke header tabel
   const height = headerHeight + rows.length * rowHeight + 20;
 
+  // 1. Mengubah label SOL BAL menjadi DYL BAL
   const cols = [
     { key: 'wallet', label: 'WALLET', x: 20 },
-    { key: 'solBal', label: 'SOL BAL', x: 220 },
+    { key: 'solBal', label: 'DYL BAL', x: 220 },
     { key: 'bought', label: 'BOUGHT', x: 330 },
     { key: 'sold', label: 'SOLD', x: 460 },
     { key: 'pnlUsd', label: 'PNL', x: 590 },
@@ -87,27 +88,38 @@ function buildSvg(rows, totalVisits) {
     rowsSvg += `<text x="${cols[1].x}" y="${y}" fill="#c9d1d9" font-family="Consolas, monospace" font-size="13">${row.solBal} (${row.lastActive})</text>`;
     rowsSvg += `<text x="${cols[2].x}" y="${y}" fill="#3fb950" font-family="Consolas, monospace" font-size="13">${row.bought} / ${row.boughtMC}</text>`;
     rowsSvg += `<text x="${cols[3].x}" y="${y}" fill="#f85149" font-family="Consolas, monospace" font-size="13">${row.sold} / ${row.soldMC}</text>`;
-    rowsSvg += `<text x="${cols[4].x}" y="${y}" fill="#color" font-family="Consolas, monospace" font-size="13">${row.pnlUsd}</text>`;
+    
+    // 2. Memperbaiki Bug PNL: Mengganti fill="#color" menjadi fill="${color}"
+    rowsSvg += `<text x="${cols[4].x}" y="${y}" fill="${color}" font-family="Consolas, monospace" font-size="13">${row.pnlUsd}</text>`;
     rowsSvg += `<text x="${cols[5].x}" y="${y}" fill="${color}" font-family="Consolas, monospace" font-size="13">${row.pnlPct}</text>`;
   });
 
+  // Mengatur posisi y header WALLET, DYL BAL, dst. agar berjarak dari judul atas
   const headerSvg = cols
     .map(
       (c) =>
-        `<text x="${c.x}" y="30" fill="#8b949e" font-family="Consolas, monospace" font-size="12" font-weight="bold">${c.label}</text>`
+        `<text x="${c.x}" y="42" fill="#8b949e" font-family="Consolas, monospace" font-size="12" font-weight="bold">${c.label}</text>`
     )
     .join('');
 
+  // 3. Mengubah warna TOTAL VISITS menjadi Oranye (#f97316) & memisahkan elemennya
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
   <rect width="${width}" height="${height}" fill="#0d1117" rx="6" />
   <rect width="${width}" height="${headerHeight}" fill="#161b22" />
-  <text x="20" y="18" fill="#58a6ff" font-family="Consolas, monospace" font-size="11">LIVE ORDERBOOK · TOTAL VISITS: ${totalVisits}</text>
+  
+  <!-- Title Top Header -->
+  <text x="20" y="20" font-family="Consolas, monospace" font-size="11">
+    <tspan fill="#58a6ff">LIVE ORDERBOOK</tspan>
+    <tspan fill="#8b949e"> · </tspan>
+    <tspan fill="#f97316" font-weight="bold">TOTAL VISITS: ${totalVisits}</tspan>
+  </text>
+  
   ${headerSvg}
   ${rowsSvg}
 </svg>`;
 }
 
-// Menggunakan CounterAPI.com sebagai pengganti countapi.xyz
+// Menggunakan CounterAPI.com
 async function getVisitCount() {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -121,7 +133,6 @@ async function getVisitCount() {
       return data.count;
     }
   } catch (e) {
-    // Jika counter gagal/timeout, default fallback ke 1 (bukan timestamp acak lagi)
     console.error('Counter API error:', e);
   } finally {
     clearTimeout(timeout);
@@ -133,8 +144,6 @@ async function getVisitCount() {
 module.exports = async (req, res) => {
   const totalVisits = await getVisitCount();
 
-  // Jumlah row menyesuaikan jumlah total visit (1 visit = 1 row)
-  // Dibatasi maksimal MAX_ROWS agar SVG tidak terlalu tinggi
   const rowCount = Math.min(totalVisits, MAX_ROWS);
   const rows = Array.from({ length: rowCount }, generateRow);
 
