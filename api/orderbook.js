@@ -6,12 +6,12 @@
 //   2) beberapa baris "wallet" digenerate dengan data acak (SOL bal, bought, sold, pnl)
 //   3) semuanya dirender jadi SVG bertema dark trading terminal
 //
-// GANTI "NAMESPACE" di bawah jadi sesuatu yang unik (misal username GitHub kamu),
-// biar counter-nya nggak nyampur sama punya orang lain yang pakai script yang sama.
+// GANTI "NAMESPACE" di bawah jadi sesuatu yang unik (misal username GitHub kamu).
 
 const NAMESPACE = 'Dylandelany';
 const KEY = 'profile-visits';
-const ROWS = 6; // jumlah baris wallet yang ditampilkan tiap load
+const ROWS = 6;
+const COUNTER_TIMEOUT_MS = 1500;
 
 function rand(min, max) {
   return Math.random() * (max - min) + min;
@@ -113,23 +113,31 @@ function buildSvg(rows, totalVisits) {
 </svg>`;
 }
 
-module.exports = async (req, res) => {
-  let totalVisits = Date.now() % 100000; // fallback kalau countapi lagi down
+async function getVisitCount() {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), COUNTER_TIMEOUT_MS);
 
   try {
-    const r = await fetch(`https://api.countapi.xyz/hit/${NAMESPACE}/${KEY}`);
+    const r = await fetch(`https://api.countapi.xyz/hit/${NAMESPACE}/${KEY}`, {
+      signal: controller.signal,
+    });
     const data = await r.json();
-    if (data && typeof data.value === 'number') totalVisits = data.value;
+    if (data && typeof data.value === 'number') return data.value;
   } catch (e) {
-    // biarkan pakai fallback di atas
+    // countapi lambat/down/timeout -> pakai fallback, jangan sampai nge-hang
+  } finally {
+    clearTimeout(timeout);
   }
 
+  return Date.now() % 100000;
+}
+
+module.exports = async (req, res) => {
+  const totalVisits = await getVisitCount();
   const rows = Array.from({ length: ROWS }, generateRow);
   const svg = buildSvg(rows, totalVisits);
 
   res.setHeader('Content-Type', 'image/svg+xml');
-  // Header ini penting: minta browser/GitHub camo proxy jangan cache gambar ini,
-  // supaya tiap kali di-load datanya benar-benar baru.
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
