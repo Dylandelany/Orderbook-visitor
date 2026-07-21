@@ -1,21 +1,15 @@
 // api/orderbook.js
-//
-// Endpoint ini dipanggil lewat <img src="..."> di README GitHub kamu.
-// Setiap kali gambar ini di-fetch (setiap kali profil dibuka / README direfresh):
-//   1) counter total visit ditambah lewat countapi.xyz (gratis, tanpa auth)
-//   2) beberapa baris "wallet" digenerate dengan data acak (SOL bal, bought, sold, pnl)
-//   3) semuanya dirender jadi SVG bertema dark trading terminal
-//
-// GANTI "NAMESPACE" di bawah jadi sesuatu yang unik (misal username GitHub kamu).
 
+// GANTI DENGAN USERNAME/KEY UNIK KAMU
 const NAMESPACE = 'Dylandelany';
-const KEY = 'profile-visits';
-const ROWS = 6;
-const COUNTER_TIMEOUT_MS = 1500;
+const KEY = 'orderbook-visits';
+const MAX_ROWS = 5; // Batas maksimal baris SVG agar gambar tidak terlalu panjang
+const TIMEOUT_MS = 2500;
 
 function rand(min, max) {
   return Math.random() * (max - min) + min;
 }
+
 function randInt(min, max) {
   return Math.floor(rand(min, max + 1));
 }
@@ -93,7 +87,7 @@ function buildSvg(rows, totalVisits) {
     rowsSvg += `<text x="${cols[1].x}" y="${y}" fill="#c9d1d9" font-family="Consolas, monospace" font-size="13">${row.solBal} (${row.lastActive})</text>`;
     rowsSvg += `<text x="${cols[2].x}" y="${y}" fill="#3fb950" font-family="Consolas, monospace" font-size="13">${row.bought} / ${row.boughtMC}</text>`;
     rowsSvg += `<text x="${cols[3].x}" y="${y}" fill="#f85149" font-family="Consolas, monospace" font-size="13">${row.sold} / ${row.soldMC}</text>`;
-    rowsSvg += `<text x="${cols[4].x}" y="${y}" fill="${color}" font-family="Consolas, monospace" font-size="13">${row.pnlUsd}</text>`;
+    rowsSvg += `<text x="${cols[4].x}" y="${y}" fill="#color" font-family="Consolas, monospace" font-size="13">${row.pnlUsd}</text>`;
     rowsSvg += `<text x="${cols[5].x}" y="${y}" fill="${color}" font-family="Consolas, monospace" font-size="13">${row.pnlPct}</text>`;
   });
 
@@ -113,28 +107,37 @@ function buildSvg(rows, totalVisits) {
 </svg>`;
 }
 
+// Menggunakan CounterAPI.com sebagai pengganti countapi.xyz
 async function getVisitCount() {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), COUNTER_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   try {
-    const r = await fetch(`https://api.countapi.xyz/hit/${NAMESPACE}/${KEY}`, {
+    const res = await fetch(`https://api.counterapi.dev/v1/${NAMESPACE}/${KEY}/up`, {
       signal: controller.signal,
     });
-    const data = await r.json();
-    if (data && typeof data.value === 'number') return data.value;
+    const data = await res.json();
+    if (data && typeof data.count === 'number') {
+      return data.count;
+    }
   } catch (e) {
-    // countapi lambat/down/timeout -> pakai fallback, jangan sampai nge-hang
+    // Jika counter gagal/timeout, default fallback ke 1 (bukan timestamp acak lagi)
+    console.error('Counter API error:', e);
   } finally {
     clearTimeout(timeout);
   }
 
-  return Date.now() % 100000;
+  return 1;
 }
 
 module.exports = async (req, res) => {
   const totalVisits = await getVisitCount();
-  const rows = Array.from({ length: ROWS }, generateRow);
+
+  // Jumlah row menyesuaikan jumlah total visit (1 visit = 1 row)
+  // Dibatasi maksimal MAX_ROWS agar SVG tidak terlalu tinggi
+  const rowCount = Math.min(totalVisits, MAX_ROWS);
+  const rows = Array.from({ length: rowCount }, generateRow);
+
   const svg = buildSvg(rows, totalVisits);
 
   res.setHeader('Content-Type', 'image/svg+xml');
