@@ -9,25 +9,28 @@
   body {
     background: #000;
     color: #f0a020;
-    font-family: Consolas, "Courier New", monospace;
+    font-family: "Courier New", Consolas, monospace;
     margin: 0;
     padding: 0;
+    letter-spacing: 0.2px;
   }
   .topbar {
-    background: #8b0000;
-    padding: 10px 16px;
+    background: #4a0000; /* merah tua, kesan jadul */
+    border-bottom: 2px solid #2a0000;
+    padding: 8px 16px;
     color: #fff;
     font-weight: bold;
     font-size: 14px;
   }
   .topbar span {
     margin-right: 24px;
-    color: #ffd9a0;
+    color: #e0b978;
     font-weight: normal;
   }
   .searchbar {
-    background: #c47a1f;
-    padding: 10px 16px;
+    background: #a8681f; /* oranye tua/kusam, bukan oranye terang modern */
+    border-bottom: 2px solid #6e4514;
+    padding: 8px 16px;
     display: flex;
     gap: 8px;
     align-items: center;
@@ -35,9 +38,9 @@
   .searchbar input {
     flex: 1;
     background: #000;
-    border: 1px solid #000;
+    border: 1px solid #3a2000;
     color: #f0a020;
-    font-family: Consolas, monospace;
+    font-family: "Courier New", Consolas, monospace;
     font-size: 14px;
     padding: 8px 10px;
   }
@@ -46,55 +49,67 @@
     color: #f0a020;
     border: 1px solid #f0a020;
     padding: 8px 16px;
-    font-family: Consolas, monospace;
+    font-family: "Courier New", Consolas, monospace;
     cursor: pointer;
   }
   .searchbar button:hover {
     background: #f0a020;
     color: #000;
   }
+  .status {
+    color: #6e7681;
+    padding: 8px 16px;
+    font-size: 12px;
+    border-bottom: 1px solid #262626;
+  }
   .newslist {
-    padding: 12px 16px;
-    max-width: 1000px;
+    max-width: 1100px;
     margin: 0 auto;
   }
   .newsrow {
     display: flex;
-    justify-content: space-between;
+    align-items: baseline;
     gap: 12px;
-    padding: 8px 0;
-    border-bottom: 1px solid #1a1a1a;
+    padding: 9px 16px;
+    border-bottom: 1px solid #262626; /* sekat antar baris */
     font-size: 14px;
+  }
+  .newsrow:hover {
+    background: #16233a; /* highlight biru gelap ala baris terpilih di Bloomberg */
   }
   .newsrow .idx {
     color: #6e7681;
-    width: 28px;
+    width: 26px;
     flex-shrink: 0;
+    text-align: right;
+  }
+  .newsrow .title a {
+    flex: 1;
+    color: #f0a020;
+    text-decoration: none;
+  }
+  .newsrow .title a:hover {
+    text-decoration: underline;
+    color: #ffc966;
   }
   .newsrow .title {
     flex: 1;
-    color: #f0a020;
   }
   .newsrow .source {
     color: #8b949e;
-    width: 120px;
+    width: 130px;
     text-align: right;
     font-size: 12px;
     flex-shrink: 0;
+    border-left: 1px solid #262626; /* sekat antar kolom */
+    padding-left: 12px;
   }
   .newsrow .time {
-    color: #58a6ff;
-    width: 50px;
+    color: #4ea8de;
+    width: 46px;
     text-align: right;
     font-size: 12px;
     flex-shrink: 0;
-  }
-  .status {
-    color: #6e7681;
-    padding: 8px 16px 0;
-    font-size: 12px;
-    max-width: 1000px;
-    margin: 0 auto;
   }
 </style>
 </head>
@@ -125,18 +140,28 @@ async function loadNews() {
     data.news.forEach((item, i) => {
       const row = document.createElement('div');
       row.className = 'newsrow';
+
       const idx = document.createElement('div');
       idx.className = 'idx';
       idx.textContent = (i + 1) + ')';
+
       const title = document.createElement('div');
       title.className = 'title';
-      title.textContent = item.title;
+      const link = document.createElement('a');
+      link.href = item.link || '#';
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = item.title;
+      title.appendChild(link);
+
       const source = document.createElement('div');
       source.className = 'source';
       source.textContent = item.source;
+
       const time = document.createElement('div');
       time.className = 'time';
       time.textContent = item.time;
+
       row.appendChild(idx);
       row.appendChild(title);
       row.appendChild(source);
