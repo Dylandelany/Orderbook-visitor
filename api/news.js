@@ -1,14 +1,3 @@
-// api/news.js
-//
-// Endpoint ini render panel "news feed" bergaya Bloomberg Terminal untuk
-// ditempel di README lewat <img>. Berita ditentukan lewat query ?q=nama_company,
-// kalau tidak diisi, dipilih random dari daftar company di lib/googleNews.js.
-//
-// Contoh pemakaian di README:
-// <img src="https://<domain-vercel-kamu>/api/news" width="100%">
-// atau kalau mau company tertentu:
-// <img src="https://<domain-vercel-kamu>/api/news?q=Boeing" width="100%">
-
 const { fetchCompanyNews } = require('../lib/googleNews');
 
 function escapeXml(str) {
