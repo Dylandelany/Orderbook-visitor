@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>News Terminal</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    background: #000;
+    color: #f0a020;
+    font-family: Consolas, "Courier New", monospace;
+    margin: 0;
+    padding: 0;
+  }
+  .topbar {
+    background: #8b0000;
+    padding: 10px 16px;
+    color: #fff;
+    font-weight: bold;
+    font-size: 14px;
+  }
+  .topbar span {
+    margin-right: 24px;
+    color: #ffd9a0;
+    font-weight: normal;
+  }
+  .searchbar {
+    background: #c47a1f;
+    padding: 10px 16px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .searchbar input {
+    flex: 1;
+    background: #000;
+    border: 1px solid #000;
+    color: #f0a020;
+    font-family: Consolas, monospace;
+    font-size: 14px;
+    padding: 8px 10px;
+  }
+  .searchbar button {
+    background: #000;
+    color: #f0a020;
+    border: 1px solid #f0a020;
+    padding: 8px 16px;
+    font-family: Consolas, monospace;
+    cursor: pointer;
+  }
+  .searchbar button:hover {
+    background: #f0a020;
+    color: #000;
+  }
+  .newslist {
+    padding: 12px 16px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .newsrow {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #1a1a1a;
+    font-size: 14px;
+  }
+  .newsrow .idx {
+    color: #6e7681;
+    width: 28px;
+    flex-shrink: 0;
+  }
+  .newsrow .title {
+    flex: 1;
+    color: #f0a020;
+  }
+  .newsrow .source {
+    color: #8b949e;
+    width: 120px;
+    text-align: right;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+  .newsrow .time {
+    color: #58a6ff;
+    width: 50px;
+    text-align: right;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+  .status {
+    color: #6e7681;
+    padding: 8px 16px 0;
+    font-size: 12px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    Search News <span>Actions</span><span>Custom Searches</span><span>Key Themes</span>
+  </div>
+  <div class="searchbar">
+    <input id="q" placeholder="Ketik nama company, misal: Boeing, BBCA, Telkom Indonesia..." onkeydown="if(event.key==='Enter') loadNews()" />
+    <button onclick="loadNews()">Search</button>
+  </div>
+  <div class="status" id="status"></div>
+  <div class="newslist" id="list"></div>
+
+<script>
+async function loadNews() {
+  const q = document.getElementById('q').value || '';
+  const status = document.getElementById('status');
+  const list = document.getElementById('list');
+  status.textContent = 'Loading...';
+  list.innerHTML = '';
+  try {
+    const r = await fetch('/api/news-data?q=' + encodeURIComponent(q));
+    const data = await r.json();
+    status.textContent = data.ok
+      ? 'Showing news for: ' + data.query
+      : 'Tidak ada berita ditemukan untuk: ' + data.query;
+    data.news.forEach((item, i) => {
+      const row = document.createElement('div');
+      row.className = 'newsrow';
+      const idx = document.createElement('div');
+      idx.className = 'idx';
+      idx.textContent = (i + 1) + ')';
+      const title = document.createElement('div');
+      title.className = 'title';
+      title.textContent = item.title;
+      const source = document.createElement('div');
+      source.className = 'source';
+      source.textContent = item.source;
+      const time = document.createElement('div');
+      time.className = 'time';
+      time.textContent = item.time;
+      row.appendChild(idx);
+      row.appendChild(title);
+      row.appendChild(source);
+      row.appendChild(time);
+      list.appendChild(row);
+    });
+  } catch (e) {
+    status.textContent = 'Error loading news.';
+  }
+}
+loadNews();
+</script>
+</body>
+</html>
