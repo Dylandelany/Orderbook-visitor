@@ -18,8 +18,11 @@ function truncate(str, max) {
 
 function buildSvg({ query, news, ok }) {
   const width = 900;
-  const rowHeight = 26;
-  const headerHeight = 68;
+  const rowHeight = 28;
+  const topBarHeight = 30;
+  const bannerHeight = 30;
+  const labelHeight = 22; // ruang khusus buat label "NEWS FEED", nggak nempel ke row pertama
+  const headerHeight = topBarHeight + bannerHeight + labelHeight;
   const rows = ok && news.length > 0 ? news : [{ title: 'Tidak ada berita ditemukan saat ini', source: '', time: '' }];
   const height = headerHeight + rows.length * rowHeight + 16;
 
@@ -28,25 +31,25 @@ function buildSvg({ query, news, ok }) {
     const y = headerHeight + i * rowHeight + 18;
     rowsSvg += `<text x="20" y="${y}" fill="#6e7681" font-family="Consolas, monospace" font-size="12">${i + 1})</text>`;
     rowsSvg += `<text x="55" y="${y}" fill="#f0a020" font-family="Consolas, monospace" font-size="13">${escapeXml(
-      truncate(item.title, 78)
+      truncate(item.title, 76)
     )}</text>`;
-    rowsSvg += `<text x="${width - 140}" y="${y}" fill="#8b949e" font-family="Consolas, monospace" font-size="12">${escapeXml(
-      truncate(item.source, 18)
+    rowsSvg += `<text x="${width - 80}" y="${y}" fill="#8b949e" font-family="Consolas, monospace" font-size="12" text-anchor="end">${escapeXml(
+      truncate(item.source, 16)
     )}</text>`;
-    rowsSvg += `<text x="${width - 55}" y="${y}" fill="#58a6ff" font-family="Consolas, monospace" font-size="12">${item.time}</text>`;
+    rowsSvg += `<text x="${width - 16}" y="${y}" fill="#58a6ff" font-family="Consolas, monospace" font-size="12" text-anchor="end">${item.time}</text>`;
   });
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
   <rect width="${width}" height="${height}" fill="#000000" rx="4" />
-  <rect width="${width}" height="30" fill="#8b0000" />
+  <rect width="${width}" height="${topBarHeight}" fill="#8b0000" />
   <text x="16" y="20" fill="#ffffff" font-family="Consolas, monospace" font-size="13" font-weight="bold">Search News</text>
   <text x="150" y="20" fill="#ffd9a0" font-family="Consolas, monospace" font-size="13">Actions</text>
   <text x="240" y="20" fill="#ffd9a0" font-family="Consolas, monospace" font-size="13">Key Themes</text>
-  <rect y="30" width="${width}" height="30" fill="#c47a1f" />
-  <text x="16" y="50" fill="#000000" font-family="Consolas, monospace" font-size="14" font-weight="bold">${escapeXml(
+  <rect y="${topBarHeight}" width="${width}" height="${bannerHeight}" fill="#c47a1f" />
+  <text x="16" y="${topBarHeight + 20}" fill="#000000" font-family="Consolas, monospace" font-size="14" font-weight="bold">${escapeXml(
     query
   )}</text>
-  <text x="16" y="${headerHeight - 6}" fill="#6e7681" font-family="Consolas, monospace" font-size="11">NEWS FEED</text>
+  <text x="16" y="${topBarHeight + bannerHeight + 15}" fill="#6e7681" font-family="Consolas, monospace" font-size="11">NEWS FEED</text>
   ${rowsSvg}
 </svg>`;
 }
